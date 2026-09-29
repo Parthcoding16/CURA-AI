@@ -1,15 +1,48 @@
+/*
+ * Global styles
+ * -------------
+ * Tailwind's base, component and utility layers, plus a few reusable classes
+ * (.field, .card, .btn-primary) so form inputs, cards and buttons look the
+ * same on every page. Colours come from the tokens in tailwind.config.js.
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@layer base {
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+  }
+
+  ::selection {
+    @apply bg-brand-soft text-brand-deep;
+  }
 }
 
-body {
-  background-color: #000000;
-  color: #ffffff;
-  font-family: Inter, system-ui, sans-serif;
+@layer components {
+  /* Text inputs, textareas and selects */
+  .field {
+    @apply w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink transition placeholder:text-muted/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15;
+  }
+
+  /* White panels with a soft shadow */
+  .card {
+    @apply rounded-2xl border border-line bg-surface shadow-card;
+  }
+
+  /* Main action button */
+  .btn-primary {
+    @apply flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+/* Accessibility: respect users who have asked their OS for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

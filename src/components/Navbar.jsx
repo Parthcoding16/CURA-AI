@@ -1,46 +1,54 @@
-import { Link } from "react-router-dom";
-import { Activity } from "lucide-react";
+/**
+ * Navbar
+ * ------
+ * Sticky top bar shown on every page: logo, links to the three tools (the
+ * current page is highlighted), and a shortcut to the Symptom Analyzer.
+ */
+import { Link, useLocation } from "react-router-dom";
+import { Plus } from "lucide-react";
+import { TOOL_LIST, TOOLS } from "../lib/tools.js";
 
-function Navbar() {
+export default function Navbar() {
+  const { pathname } = useLocation();
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-black border-b border-white/10">
-      {/* Logo */}
-      <Link to="/" className="flex items-center gap-2">
-        <Activity className="h-5 w-5 text-green-400" />
-        <span className="text-white font-bold text-lg">Cura AI</span>
-      </Link>
+    <nav className="sticky top-0 z-50 border-b border-line bg-canvas/80 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2.5">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-white">
+            <Plus className="h-5 w-5" strokeWidth={2.5} />
+          </span>
+          <span className="font-display text-lg font-semibold tracking-tight">Cura AI</span>
+        </Link>
 
-      {/* Nav Links */}
-      <div className="hidden md:flex items-center gap-6">
+        {/* Tool links (hidden on small screens) */}
+        <div className="hidden items-center gap-1 md:flex">
+          {TOOL_LIST.map((tool) => {
+            const isActive = pathname === tool.path;
+            return (
+              <Link
+                key={tool.path}
+                to={tool.path}
+                aria-current={isActive ? "page" : undefined}
+                className={`rounded-full px-3 py-1.5 text-sm transition ${
+                  isActive ? "bg-brand-soft text-brand-deep" : "text-muted hover:text-ink"
+                }`}
+              >
+                {tool.navLabel}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Call to action */}
         <Link
-          to="/ai-doctor"
-          className="text-sm text-white/60 hover:text-white transition"
+          to={TOOLS.symptoms.path}
+          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-deep"
         >
-          AI Doctor
-        </Link>
-        <Link
-          to="/ai-lab-report-explainer"
-          className="text-sm text-white/60 hover:text-white transition"
-        >
-          Lab Report
-        </Link>
-        <Link
-          to="/ai-medicine-search"
-          className="text-sm text-white/60 hover:text-white transition"
-        >
-          Medicine Search
+          Check symptoms
         </Link>
       </div>
-
-      {/* CTA Button */}
-      <Link
-        to="/ai-doctor"
-        className="px-4 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition"
-      >
-        Talk to AI Doctor
-      </Link>
     </nav>
   );
 }
-
-export default Navbar;
