@@ -1,174 +1,118 @@
+/**
+ * Symptom Analyzer page  (route: /ai-doctor)
+ * ------------------------------------------
+ * Feature: Symptom Analyzer.
+ *
+ * The user describes their symptoms (plus optional age, gender and duration).
+ * We send them to /api/analyze-symptoms and show the answer in ResultPanel.
+ */
 import { useState } from "react";
-import { Stethoscope, Loader2 } from "lucide-react";
-import { analyzeSymptoms } from "../lib/gemini.js";
-import TranslateButton from "../components/TranslateButton";
+import { Loader2 } from "lucide-react";
+import { analyzeSymptoms } from "../lib/api.js";
+import { TOOLS } from "../lib/tools.js";
+import { useAiRequest } from "../hooks/useAiRequest.js";
+import PageHeader from "../components/PageHeader.jsx";
+import ResultPanel from "../components/ResultPanel.jsx";
+import Field from "../components/Field.jsx";
 
-function AiDoctor() {
+const tool = TOOLS.symptoms;
+
+export default function AiDoctor() {
+  // Form fields
   const [symptoms, setSymptoms] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [duration, setDuration] = useState("");
-  const [result, setResult] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  // Result, loading and error state
+  const request = useAiRequest();
 
+  function handleSubmit(event) {
+    event.preventDefault();
     if (!symptoms.trim()) return;
-
-    setLoading(true);
-    setError("");
-    setResult("");
-
-    try {
-      const response = await analyzeSymptoms(symptoms, age, gender, duration);
-      setResult(response);
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong. Please check your API key and try again.");
-    }
-
-    setLoading(false);
+    request.run(() => analyzeSymptoms(symptoms, age, gender, duration));
   }
 
   return (
-    <main className="pt-24 px-6 pb-16 max-w-6xl mx-auto">
-      {/* Page Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-2.5 rounded-xl bg-green-400/10">
-          <Stethoscope className="h-5 w-5 text-green-400" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">AI Symptom Analyzer</h1>
-          <p className="text-white/40 text-sm">
-            Describe your symptoms to get possible conditions and recommendations.
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl px-6 py-12">
+      <PageHeader tool={tool} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Form */}
-        <div className="p-6 rounded-2xl border border-white/10 bg-white/5">
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left: input form */}
+        <section className="card p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Symptoms */}
-            <div>
-              <label className="block text-sm text-white/60 mb-2">
-                Describe your symptoms *
-              </label>
+            <Field id="symptoms" label="Describe your symptoms *">
               <textarea
+                id="symptoms"
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
-                placeholder="e.g. I have a headache, mild fever and sore throat since 2 days..."
+                placeholder="e.g. Headache, mild fever and a sore throat for the last 2 days..."
                 rows={5}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-green-400/50 resize-none"
+                className="field resize-none"
               />
-            </div>
+            </Field>
 
-            {/* Age and Gender */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Age</label>
+              <Field id="age" label="Age">
                 <input
+                  id="age"
                   type="number"
+                  min={1}
+                  max={120}
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
                   placeholder="e.g. 22"
-                  min={1}
-                  max={120}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-green-400/50"
+                  className="field"
                 />
-              </div>
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Gender</label>
+              </Field>
+
+              <Field id="gender" label="Gender">
                 <select
+                  id="gender"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-green-400/50"
+                  className="field"
                 >
                   <option value="">Select</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
-              </div>
+              </Field>
             </div>
 
-            {/* Duration */}
-            <div>
-              <label className="block text-sm text-white/60 mb-2">
-                Duration of symptoms
-              </label>
+            <Field id="duration" label="Duration of symptoms">
               <input
+                id="duration"
                 type="text"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="e.g. 2 days, 1 week..."
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-green-400/50"
+                className="field"
               />
-            </div>
+            </Field>
 
             <button
               type="submit"
-              disabled={loading || !symptoms.trim()}
-              className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold py-3 rounded-xl text-sm transition"
+              disabled={request.loading || !symptoms.trim()}
+              className="btn-primary w-full"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                "Analyze Symptoms"
-              )}
+              {request.loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {request.loading ? "Analyzing…" : "Analyze symptoms"}
             </button>
           </form>
-        </div>
+        </section>
 
-        {/* Result */}
-        <div className="p-6 rounded-2xl border border-white/10 bg-white/5 min-h-[300px]">
-          {/* Error state */}
-          {error && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Loading state */}
-          {loading && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 py-16">
-              <Loader2 className="h-8 w-8 text-green-400 animate-spin" />
-              <p className="text-white/40 text-sm">Analyzing your symptoms...</p>
-            </div>
-          )}
-
-          {/* Empty state */}
-          {!loading && !result && !error && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 py-16 text-center">
-              <Stethoscope className="h-12 w-12 text-white/10" />
-              <p className="text-white/30 font-medium">No Symptoms Analyzed Yet</p>
-              <p className="text-white/20 text-sm max-w-xs">
-                Fill in your symptoms on the left and click Analyze to get started.
-              </p>
-            </div>
-          )}
-
-          {/* Result */}
-          {!loading && result && (
-  <div>
-    <div className="flex justify-end mb-3">
-      <TranslateButton text={result} onTranslated={setResult} />
-    </div>
-    <div className="text-sm text-white/80 leading-7 whitespace-pre-wrap">
-      {result}
-    </div>
-  </div>
-)}
-        </div>
+        {/* Right: result */}
+        <ResultPanel
+          tool={tool}
+          request={request}
+          loadingText="Analyzing your symptoms…"
+          emptyTitle="No analysis yet"
+          emptyText="Fill in your symptoms and select analyze to get started."
+        />
       </div>
-    </main>
+    </div>
   );
 }
-
-export default AiDoctor;
